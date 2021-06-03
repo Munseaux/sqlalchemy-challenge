@@ -88,7 +88,8 @@ def tobs():
         .group_by(mesaurement.station)\
         .order_by(func.count(mesaurement.station).desc()).all()
 
-    station_year = session.query(mesaurement.tobs, mesaurement.station, mesaurement.date).order_by(mesaurement.date.desc()).filter(mesaurement.station == active_stations[0][0]).filter(mesaurement.date >= start_date).all()
+    station_year = session.query(mesaurement.tobs, mesaurement.station, mesaurement.date).order_by(mesaurement.date.desc()).\
+        filter(mesaurement.station == active_stations[0][0]).filter(mesaurement.date >= start_date).all()
 
     session.close()
 
@@ -96,8 +97,14 @@ def tobs():
     # Return a JSON list of temperature observations (TOBS) for the previous year.
 
 @app.route("/api/v1.0/<start>")
-def start_end():
-    print("sdfsdf")
+def start_end(start):
+    session = Session(bind=engine)
+    
+    query = session.query(mesaurement.date, mesaurement.tobs).filter(mesaurement.date > start)
+
+    session.close()
+
+    return jsonify(query)
 
 # Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
 
