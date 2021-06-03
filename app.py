@@ -55,17 +55,11 @@ def precipitation():
     end_date = dt.date(2017,8,23)
     start_date = end_date - dt.timedelta(days=365)
     twelve_months = session.query(mesaurement).order_by(mesaurement.date.desc()).filter(mesaurement.date >= start_date).all()
-    session.close()
-    precip = session.query(mesaurement.date, mesaurement.prcp)
+    
+    precip = session.query(mesaurement.date, mesaurement.prcp, mesaurement.station).all()
 
-    precip_df = pd.DataFrame(precip, columns=['Date', 'Precipitation'])
-
-    # Sort the dataframe by date
-
-    precip_df.sort_values('Date', inplace=True)
-    precip_df.drop_duplicates(inplace=True)
-
-    return precip_df.to_json(orient='records')
+    
+    return jsonify(precip)
 
 
    # Return the JSON representation of your dictionary.
@@ -75,15 +69,13 @@ def precipitation():
 def stations():
     #Return a JSON list of stations from the dataset.
     session = Session(bind=engine)
-    active_stations = session.query(mesaurement.station, station.name, func.count(mesaurement.station))\
-    .filter(mesaurement.station == station.station)\
-    .group_by(mesaurement.station)\
-    .order_by(func.count(mesaurement.station).desc()).all()
 
-    stations_df = pd.DataFrame(active_stations,columns=["station", "name", "count"])
+    some_stations = session.query(station.name).all()
+
     session.close()
 
-    return stations_df.to_json(orient='records')
+    return jsonify(some_stations)
+    
 
 @app.route("/api/v1.0/tobs")
 def tobs():
@@ -92,22 +84,18 @@ def tobs():
     end_date = dt.date(2017,8,23)
     start_date = end_date - dt.timedelta(days=365)
     active_stations = session.query(mesaurement.station, station.name, func.count(mesaurement.station))\
-    .filter(mesaurement.station == station.station)\
-    .group_by(mesaurement.station)\
-    .order_by(func.count(mesaurement.station).desc()).all()
-
+        .filter(mesaurement.station == station.station)\
+        .group_by(mesaurement.station)\
+        .order_by(func.count(mesaurement.station).desc()).all()
 
     station_year = session.query(mesaurement.tobs, mesaurement.station, mesaurement.date).order_by(mesaurement.date.desc()).filter(mesaurement.station == active_stations[0][0]).filter(mesaurement.date >= start_date).all()
 
-
-    year_observation_df = pd.DataFrame(station_year, columns=['temperature', 'station', 'date'])
-
     session.close()
 
-    return year_observation_df.to_json(orient='records')
+    return jsonify(station_year)
     # Return a JSON list of temperature observations (TOBS) for the previous year.
 
-@app.route("/api/v1.0/<start> and /api/v1.0/<start>/<end>")
+@app.route("/api/v1.0/<start>")
 def start_end():
     print("sdfsdf")
 
